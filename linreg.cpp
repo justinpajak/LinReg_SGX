@@ -1,8 +1,12 @@
 #include <iostream>
 #include <vector>
 
-int main() {
+void usage() {
 
-	std::cout << "hey there" << std::endl;
+}
+
+int main(int argc, char *argv[]) {
+	
+	std::cout << argv[1] << std::endl;
 	return 0;
 }
