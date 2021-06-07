@@ -9,6 +9,10 @@ void print(vector<vector<float>> m);
 
 void usage(int status);
 
+vector<vector<float>> transpose(vector<vector<float>>& m);
+
+vector<vector<float>> multiply(vector<vector<float>>& m1, vector<vector<float>>& m2);
+
 int main(int argc, char *argv[]) {
 
 	int p = 10; 	 // number of independent variables
@@ -32,23 +36,21 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	/* Get input X (n x p) matrix */
+	vector<vector<float>> X = {{1, 2}, {3, 4}, {5, 6}};
+	FILE *d_vars = fopen("x.txt", "r");
+	if (!d_vars) {
+		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
+	}
+
 	
-
-	return 0;
-}
-
-	// Get input from user "X" (n x p) matrix.
-	// n = # of users
-	// p = # of independent variables (feature values)
-	//vector<vector<float>> test = {{4, 45, 32}, {234, 5, 2}, {344, 44, 3}, {32, 0, 34}};
-
-	// Get input from user "y" (n x 1) vector
-	// n = # of users
-	// y = dependent variable for each user 
+	/* Get input y (n x 1) vector */
+	vector<vector<float>> y = {{}};
 
 
 	/* 1. Compute X' (Transpose of X) */
-		
+	print(X);
+	print(transpose(X));	
 
 	/* 2. Compute X' * X --> result is p x p matrix */
 
@@ -61,6 +63,20 @@ int main(int argc, char *argv[]) {
 	
 	/* 5. Multiply result by y (n x 1) matrix --> result is beta hat, (p x 1) matrix*/
 
+
+	return 0;
+}
+
+vector<vector<float>> transpose(vector<vector<float>>& m) {
+
+	vector<vector<float>> result(m[0].size(), vector<float>());
+	for (int i = 0; i < m.size(); i++) {
+		for (int j = 0; j < m[i].size(); j++) {
+			result[j].push_back(m[i][j]);
+		}
+	}
+	return result;
+}
 
 void usage(int status) {
 
