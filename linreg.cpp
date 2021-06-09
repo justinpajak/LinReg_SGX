@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <string.h>
 #include <vector>
+#include <math.h>
 
 using std::vector;
 
@@ -23,8 +24,8 @@ vector<vector<float>> inverse(vector<vector<float>>& m, int p);
 
 int main(int argc, char *argv[]) {
 
-	int p = 3; // number of independent variables
-	int n = 3; // number of users (points)
+	int p = 10; // number of independent variables
+	int n = 1000; // number of users (points)
 
 	int argind = 1;
 	while (argind < argc && strlen(argv[argind]) > 1 && argv[argind][0] == '-') {
@@ -78,26 +79,29 @@ int main(int argc, char *argv[]) {
 		y[line][0] = atof(buffer);
 		line++;
 	}
-	fclose(i_vars);
-
-	X = {{4, -1, 3}, {3, 8, -4}, {-3, 6, 1}};
+	fclose(i_vars);	
 
 	/* 1. Compute X' (Transpose of X) */
-	vector<vector<float>> X_trans = transpose(X);	
+	vector<vector<float>> X_trans = transpose(X);
+	std::cout << "finished X'" << std::endl;
 
 	/* 2. Compute X' * X --> result is p x p matrix */
 	vector<vector<float>> res = multiply(X_trans, X);
-	
+	std::cout << "finished X' * X" << std::endl;
+
 	/* 3. Compute inverse of X' * X */
-	res = inverse(res, p);	
+	res = inverse(res, p);
+	std::cout << "finished inverse" << std::endl;
 
 	/* 4. Multiply inverse result by X' */
-	res = multiply(res, X_trans);	
+	res = multiply(res, X_trans);
+	std::cout << "finished * X'" << std::endl;
 	
 	/* 5. Multiply result by y (n x 1) matrix --> result is beta hat, (p x 1) matrix*/
 	vector<vector<float>> beta = multiply(res, y);
+	std::cout << "finished * y" << std::endl;
 
-	print(beta);
+	//print(beta);
 
 	/* Write data back to beta.txt file */
 	FILE *b_data = fopen("beta.txt", "w");
@@ -188,7 +192,14 @@ vector<vector<float>> adjoint(vector<vector<float>>& m, int p) {
 }
 
 vector<vector<float>> inverse(vector<vector<float>>& m, int p) {
+	if (m.size() == 1 && m[0].size() == 1) {
+		m[0][0] = pow(m[0][0], -1);
+		return m;
+	}
 	float det = determinant(m, p, p);
+	if (det == 0) {
+		return m;
+	}
 	vector<vector<float>> a = adjoint(m, p);
 	vector<vector<float>> inv(p, vector<float>(p));
 
