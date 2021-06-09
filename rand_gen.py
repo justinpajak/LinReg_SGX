@@ -6,7 +6,7 @@ def main():
 
 	# Write to x.txt -> file that contains contains of X matrix (n x p)
 	p = 10
-	n = 1000
+	n = 1000000
 	
 	x = open("x.txt", "w")
 	p_counter = 0

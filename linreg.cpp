@@ -25,7 +25,7 @@ vector<vector<float>> inverse(vector<vector<float>>& m, int p);
 int main(int argc, char *argv[]) {
 
 	int p = 10; // number of independent variables
-	int n = 1000; // number of users (points)
+	int n = 1000000; // number of users (points)
 
 	int argind = 1;
 	while (argind < argc && strlen(argv[argind]) > 1 && argv[argind][0] == '-') {
