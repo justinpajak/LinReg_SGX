@@ -19,8 +19,8 @@ vector<vector<float>> inverse(vector<vector<float>>& m);
 
 int main(int argc, char *argv[]) {
 
-	int p = 10; 	 // number of independent variables
-	int n = 1000000; // number of users (points)
+	int p = 10; // number of independent variables
+	int n = 10; // number of users (points)
 
 	int argind = 1;
 	while (argind < argc && strlen(argv[argind]) > 1 && argv[argind][0] == '-') {
@@ -41,30 +41,45 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* Get input X (n x p) matrix */
-	vector<vector<float>> X = {{1, 2}, {3, 4}, {5, 6}};
+	vector<vector<float>> X(n, vector<float>(p));
 	FILE *d_vars = fopen("x.txt", "r");
 	if (!d_vars) {
 		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
 	}
-	char buffer[BUFSIZ];
-	while (fgets(buffer, BUFSIZ, d_vars)) {
-		printf("%s", buffer);
-	}
 
+	char buffer[BUFSIZ];
+	int line = 0;
+	int val = 0;
+	while (fgets(buffer, BUFSIZ, d_vars)) {
+		char *token;
+		token = strtok(buffer, ",");
+		while(token != NULL) {
+			X[line][val] = atof(token);
+			val++;
+			token = strtok(NULL, ",");
+		}
+		val = 0;
+		line++;
+	}
 	fclose(d_vars);
 	
-
-	
 	/* Get input y (n x 1) vector */
-	vector<vector<float>> y = {{}};
-
+	vector<vector<float>> y(n, vector<float>(1));
+	FILE *i_vars = fopen("y.txt", "r");
+	if (!i_vars) {
+		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
+	}
+	line = 0;
+	while (fgets(buffer, BUFSIZ, i_vars)) {
+		y[line][0] = atof(buffer);
+		line++;
+	}
 
 	/* 1. Compute X' (Transpose of X) */
 	vector<vector<float>> X_trans = transpose(X);	
 	
 	/* 2. Compute X' * X --> result is p x p matrix */
 	vector<vector<float>> res = multiply(X_trans, X);
-	print(res);
 	
 	/* 3. Compute inverse of X' * X */
 	
