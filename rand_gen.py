@@ -5,8 +5,8 @@ import sys, random
 def main():
 
 	# Write to x.txt -> file that contains contains of X matrix (n x p)
-	p = 10
-	n = 1000
+	p = 3
+	n = 3
 	
 	x = open("x.txt", "w")
 	p_counter = 0

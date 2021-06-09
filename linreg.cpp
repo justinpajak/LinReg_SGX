@@ -17,14 +17,14 @@ void cofactors(vector<vector<float>>& m, vector<vector<float>>& cofs, int p, int
 
 float determinant(vector<vector<float>>& m, int n, int p);
 
-vector<vector<float>> adjoint(vector<vector<float>>& m);
+vector<vector<float>> adjoint(vector<vector<float>>& m, int p);
 
-vector<vector<float>> inverse(vector<vector<float>>& m);
+vector<vector<float>> inverse(vector<vector<float>>& m, int p);
 
 int main(int argc, char *argv[]) {
 
-	int p = 10; // number of independent variables
-	int n = 1000; // number of users (points)
+	int p = 3; // number of independent variables
+	int n = 3; // number of users (points)
 
 	int argind = 1;
 	while (argind < argc && strlen(argv[argind]) > 1 && argv[argind][0] == '-') {
@@ -80,6 +80,8 @@ int main(int argc, char *argv[]) {
 	}
 	fclose(i_vars);
 
+	X = {{4, -1, 3}, {3, 8, -4}, {-3, 6, 1}};
+
 	/* 1. Compute X' (Transpose of X) */
 	vector<vector<float>> X_trans = transpose(X);	
 
@@ -87,15 +89,25 @@ int main(int argc, char *argv[]) {
 	vector<vector<float>> res = multiply(X_trans, X);
 	
 	/* 3. Compute inverse of X' * X */
-
-	//printf("%f\n", determinant(res, p, p));
-
+	res = inverse(res, p);	
 
 	/* 4. Multiply inverse result by X' */
-
+	res = multiply(res, X_trans);	
 	
 	/* 5. Multiply result by y (n x 1) matrix --> result is beta hat, (p x 1) matrix*/
+	vector<vector<float>> beta = multiply(res, y);
 
+	print(beta);
+
+	/* Write data back to beta.txt file */
+	FILE *b_data = fopen("beta.txt", "w");
+	if (!b_data) {
+		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
+	}
+	for (int i = 0; i < beta.size(); i++) {
+		fprintf(b_data, "%f\n", beta[i][0]);
+	}
+	fclose(b_data);
 
 	return 0;
 }
@@ -160,8 +172,32 @@ float determinant(vector<vector<float>>& m, int n, int p) {
 	return det;
 }
 
-vector<vector<float>> inverse(vector<vector<float>>& m) {
+vector<vector<float>> adjoint(vector<vector<float>>& m, int p) {
+	int sign = 1;
+	vector<vector<float>> cofs(p, vector<float>(p));
+	vector<vector<float>> adj(p, vector<float>(p));
 
+	for (int i = 0; i < p; i++) {
+		for (int j = 0; j < p; j++) {
+			cofactors(m, cofs, i, j, p);
+			sign = ((i + j) % 2 == 0) ? 1 : -1;
+			adj[j][i] = sign * determinant(cofs, p - 1, p - 1);
+		}
+	}
+	return adj;
+}
+
+vector<vector<float>> inverse(vector<vector<float>>& m, int p) {
+	float det = determinant(m, p, p);
+	vector<vector<float>> a = adjoint(m, p);
+	vector<vector<float>> inv(p, vector<float>(p));
+
+	for (int i = 0; i < p; i++) {
+		for (int j = 0; j < p; j++) {
+			inv[i][j] = a[i][j]/det;	
+		}
+	}
+	return inv;
 }
 
 void usage(int status) {
