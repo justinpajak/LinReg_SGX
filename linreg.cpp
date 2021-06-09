@@ -49,11 +49,11 @@ int main(int argc, char *argv[]) {
 
 
 	/* 1. Compute X' (Transpose of X) */
-	print(X);
-	print(transpose(X));	
+	vector<vector<float>> X_prime = transpose(X);	
 
 	/* 2. Compute X' * X --> result is p x p matrix */
-
+	vector<vector<float>> res = multiply(X_prime, X);
+	//print(res);
 	
 	/* 3. Compute inverse of X' * X */
 
@@ -73,6 +73,20 @@ vector<vector<float>> transpose(vector<vector<float>>& m) {
 	for (int i = 0; i < m.size(); i++) {
 		for (int j = 0; j < m[i].size(); j++) {
 			result[j].push_back(m[i][j]);
+		}
+	}
+	return result;
+}
+
+vector<vector<float>> multiply(vector<vector<float>>& m1, vector<vector<float>>& m2) {
+
+	vector<vector<float>> result(m1.size(), vector<float>());
+	for (int i = 0; i < m1.size(); i++) {
+		for (int j = 0; j < m2[0].size(); j++) {
+			result[i].push_back
+			for (int k = 0; k < m2.size(); k++) {
+				result[i][j] += m1[i][k] * m2[k][j];
+			}
 		}
 	}
 	return result;
