@@ -3,21 +3,27 @@
 import sys, random
 
 def main():
+
+	# Write to x.txt -> file that contains contains of X matrix (n x p)
 	p = 10
-	n = 1000000
+	n = 10
 	
 	x = open("x.txt", "w")
 	p_counter = 0
-	for i in range(n):
-		if p_counter == 10:
-			p_counter = 0
-			x.write("\n")
-
-		x.write("{0:.3f}".format(random.uniform(0, 100)))
-		p_counter += 1
-		if p_counter < 10:
-			x.write(",");
+	for _ in range(n):
+		for i in range(p):
+			x.write("{0:.3f}".format(random.uniform(0, 100)))
+			if i != p - 1:
+				x.write(",")
+		x.write("\n");
 	x.close()
+
+	# Write to y.txt -> file that contains value of y vector (n x 1)
+	y = open("y.txt", "w")
+	for i in range(n):
+		y.write("{0:.3f}\n".format(random.uniform(0, 100)))
+	y.close()
+
 
 if __name__ == '__main__':
 	main()
