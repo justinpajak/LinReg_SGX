@@ -12,7 +12,7 @@ def main():
 	p_counter = 0
 	for _ in range(n):
 		for i in range(p):
-			x.write("{0:.3f}".format(random.uniform(0, 0.1)))
+			x.write("{0:.6f}".format(random.uniform(0, 0.1)))
 			if i != p - 1:
 				x.write(",")
 		x.write("\n");

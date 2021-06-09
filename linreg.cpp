@@ -3,6 +3,7 @@
 #include <string.h>
 #include <vector>
 #include <math.h>
+#include <chrono>
 
 using std::vector;
 
@@ -82,26 +83,40 @@ int main(int argc, char *argv[]) {
 	fclose(i_vars);	
 
 	/* 1. Compute X' (Transpose of X) */
+	auto start = std::chrono::high_resolution_clock::now();
 	vector<vector<float>> X_trans = transpose(X);
-	std::cout << "finished X'" << std::endl;
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "finished X'. 		Time taken: " << duration.count() / float(1000000) << " seconds." << std::endl;
 
 	/* 2. Compute X' * X --> result is p x p matrix */
+	start = std::chrono::high_resolution_clock::now();
 	vector<vector<float>> res = multiply(X_trans, X);
-	std::cout << "finished X' * X" << std::endl;
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "finished X' * X. 	Time taken: " << duration.count() / float(1000000) << " seconds." << std::endl;
 
 	/* 3. Compute inverse of X' * X */
+	start = std::chrono::high_resolution_clock::now();
 	res = inverse(res, p);
-	std::cout << "finished inverse" << std::endl;
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "finished inverse. 	Time taken: " << duration.count() / float(1000000) << " seconds." << std::endl;
 
 	/* 4. Multiply inverse result by X' */
+	start = std::chrono::high_resolution_clock::now();
 	res = multiply(res, X_trans);
-	std::cout << "finished * X'" << std::endl;
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "finished * X'.		Time taken: " << duration.count() / float(1000000) << " seconds." << std::endl;
 	
 	/* 5. Multiply result by y (n x 1) matrix --> result is beta hat, (p x 1) matrix*/
+	start = std::chrono::high_resolution_clock::now();
 	vector<vector<float>> beta = multiply(res, y);
-	std::cout << "finished * y" << std::endl;
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "finished * y. 		Time taken: "<< duration.count() / float(1000000) << " seconds." << std::endl;
 
-	//print(beta);
 
 	/* Write data back to beta.txt file */
 	FILE *b_data = fopen("beta.txt", "w");
