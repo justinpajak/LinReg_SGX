@@ -13,14 +13,18 @@ vector<vector<float>> transpose(vector<vector<float>>& m);
 
 vector<vector<float>> multiply(vector<vector<float>>& m1, vector<vector<float>>& m2);
 
-float determinant(vector<vector<float>>& m, int p);
+void cofactors(vector<vector<float>>& m, vector<vector<float>>& cofs, int p, int q, int n);
+
+float determinant(vector<vector<float>>& m, int n, int p);
+
+vector<vector<float>> adjoint(vector<vector<float>>& m);
 
 vector<vector<float>> inverse(vector<vector<float>>& m);
 
 int main(int argc, char *argv[]) {
 
 	int p = 10; // number of independent variables
-	int n = 10; // number of users (points)
+	int n = 1000; // number of users (points)
 
 	int argind = 1;
 	while (argind < argc && strlen(argv[argind]) > 1 && argv[argind][0] == '-') {
@@ -74,15 +78,18 @@ int main(int argc, char *argv[]) {
 		y[line][0] = atof(buffer);
 		line++;
 	}
+	fclose(i_vars);
 
 	/* 1. Compute X' (Transpose of X) */
 	vector<vector<float>> X_trans = transpose(X);	
-	
+
 	/* 2. Compute X' * X --> result is p x p matrix */
 	vector<vector<float>> res = multiply(X_trans, X);
 	
 	/* 3. Compute inverse of X' * X */
-	
+
+	//printf("%f\n", determinant(res, p, p));
+
 
 	/* 4. Multiply inverse result by X' */
 
@@ -106,6 +113,7 @@ vector<vector<float>> transpose(vector<vector<float>>& m) {
 
 vector<vector<float>> multiply(vector<vector<float>>& m1, vector<vector<float>>& m2) {
 
+
 	vector<vector<float>> result(m1.size(), vector<float>(m2[0].size()));
 	for (int i = 0; i < m1.size(); i++) {
 		for (int j = 0; j < m2[0].size(); j++) {
@@ -117,8 +125,39 @@ vector<vector<float>> multiply(vector<vector<float>>& m1, vector<vector<float>>&
 	return result;
 }
 
-float determinant(vector<vector<float>>& m, int p) {
+void cofactors(vector<vector<float>>& m, vector<vector<float>>& cofs, int p, int q, int n) {
+	int i = 0;
+	int j = 0;
+	for (int r = 0; r < n; r++) {
+		for (int c = 0; c < n; c++) {
+			if (r != p && c != q) {
+				cofs[i][j] = m[r][c];
+				j++;
+				if (j == n - 1) {
+					j = 0; 
+					i++;
+				}
+			}	
 
+		}
+	}
+}
+
+float determinant(vector<vector<float>>& m, int n, int p) {
+	float det = 0;
+	if (n == 1) {
+		return m[0][0];
+	}
+
+	vector<vector<float>> cofs(p, vector<float>(p));
+	int sign = 1;
+	for (int i = 0; i < n; i++) {
+		cofactors(m, cofs, 0, i, n);
+		det += sign * m[0][i] * determinant(cofs, n - 1, p);
+		sign *= -1;
+	}
+
+	return det;
 }
 
 vector<vector<float>> inverse(vector<vector<float>>& m) {
