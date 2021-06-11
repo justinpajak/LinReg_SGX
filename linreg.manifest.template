@@ -24,8 +24,8 @@ fs.mount.tmp.path = "/tmp"
 fs.mount.tmp.uri = "file:/tmp"
 
 sgx.trusted_files.linreg = "file:./linreg"
-sgx.allowed_files.xdata = "file:./x.txt"
-sgx.allowed_files.ydata = "file:./y.txt"
+sgx.allowed_files.xdata = "file:./enc_x.txt"
+sgx.allowed_files.ydata = "file:./enc_y.txt"
 sgx.allowed_files.beta = "file:./beta.txt"
 
 sgx.enclave_size = "1G"
