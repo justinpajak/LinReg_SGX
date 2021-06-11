@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import sys, random
+import sys, random, os
 
 def main():
 
@@ -31,6 +31,8 @@ def main():
 		y.write("{0:.3f}\n".format(random.uniform(0, 1)))
 	y.close()
 
+	# Call encryption program to encrypt x and y files
+	os.popen("./aes")
 
 if __name__ == '__main__':
 	main()

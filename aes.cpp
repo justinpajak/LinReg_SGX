@@ -23,45 +23,62 @@ int main(int argc, char *argv[]) {
     unsigned char ciphertext[128];
     int ciphertext_len, decryptedtext_len;
 
-    /* Loop through data.txt file and encrypt each float */
-    FILE* data = fopen("data.txt", "r+");
-    if (!data) {
+    /* Loop through x.txt file and encrypt each line */
+    FILE *data_x = fopen("x.txt", "r+");
+    if (!data_x) {
         fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
         return 1;
     }
-    FILE* enc_data = fopen("enc.txt", "w+");
-    if (!enc_data) {
+    FILE *enc_x = fopen("enc_x.txt", "w+");
+    if (!enc_x) {
         fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
         return 1;
     }
     char buffer[BUFSIZ];
-    while (fgets(buffer, BUFSIZ, data)) {
-        buffer[16] = '\0';
+    while (fgets(buffer, BUFSIZ, data_x)) {
         plaintext = (unsigned char*)buffer;
         ciphertext_len = encrypt(plaintext, strlen((char*)plaintext), key, iv, ciphertext);
-        fwrite((const char*)ciphertext, 128, 1, enc_data);
+        fwrite((const char*)ciphertext, 128, 1, enc_x);
     };
+
+	/* Loop through y.txt file and encrypt each line */
+	FILE *data_y = fopen("y.txt", "r+");
+	if (!data_y) {
+		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
+		return 1;
+	}
+	FILE *enc_y = fopen("enc_y.txt", "w+");
+	if (!enc_y) {
+		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
+		return 1;
+	}
+	while (fgets(buffer, BUFSIZ, data_y)) {
+		plaintext = (unsigned char*)buffer;
+		ciphertext_len = encrypt(plaintext, strlen((char*)plaintext), key, iv, ciphertext);
+		fwrite((const char*)ciphertext, 128, 1, enc_y);
+	}
 
 
     // test protocol: Decrypt all of enc.txt to dec.txt 
-    FILE* dec_data = fopen("dec.txt", "w");
+    /*FILE* dec_data = fopen("dec", "w");
     if (!dec_data) {
         fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
         return 1;
     }
-    fseek(enc_data, 0L, SEEK_SET);
-    while(fread((char*)ciphertext, 128, 1, enc_data)) {
+    fseek(enc_y, 0L, SEEK_SET);
+    while(fread((char*)ciphertext, 128, 1, enc_y)) {
         unsigned char decryptedtext[128];
         decryptedtext_len = decrypt(ciphertext, ciphertext_len, key, iv, decryptedtext);
         decryptedtext[decryptedtext_len] = '\0';
         fputs((const char*)decryptedtext, dec_data);
-        fputs("\n", dec_data);
     }
 
-    fclose(dec_data);
+    fclose(dec_data);*/
 
-    fclose(data);
-    fclose(enc_data);
+    fclose(data_x);
+    fclose(enc_x);
+	fclose(data_y);
+	fclose(enc_y);
 
 	return 0;
 }
