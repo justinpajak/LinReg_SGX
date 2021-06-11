@@ -4,6 +4,9 @@
 #include <vector>
 #include <math.h>
 #include <chrono>
+#include <openssl/conf.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
 
 using std::vector;
 
@@ -22,6 +25,9 @@ double determinant(vector<vector<double>>& m, int n, int p);
 void adjoint(vector<vector<double>>& m, vector<vector<double>>& a, int p);
 
 void inverse(vector<vector<double>>& m, int p);
+
+int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
+            unsigned char *iv, unsigned char *plaintext);
 
 int main(int argc, char *argv[]) {
 
@@ -46,44 +52,64 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	
-	/* Read enc_x.txt and enc_y.txt into enclave and populate X matrix and y vector */
+	/* Read enc_x.txt into enclave, decrypt each line, and populate X matrix */
 	vector<vector<double>> X(n, vector<double>(p));
-
-	/* Get input X (n x p) matrix */ 
-	FILE *d_vars = fopen("x.txt", "r");
-	if (!d_vars) {
+	FILE *enc_x = fopen("enc_x.txt", "r");
+	if (!enc_x) {
 		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
+		return 0;
 	}
-
-	char buffer[BUFSIZ];
-	int line = 0;
-	int val = 0;
-	while (fgets(buffer, BUFSIZ, d_vars)) {
-		char *token;
-		token = strtok(buffer, ",");
-		while(token != NULL) {
-			X[line][val] = atof(token);
+	unsigned char ciphertext[128];
+	unsigned char *key = (unsigned char *)"01234567890123456789012345678901";
+    unsigned char *iv = (unsigned char *)"0123456789012345";
+    int ciphertext_len;
+    if (p <= 2) {
+    	ciphertext_len = 16;
+    } else if (p <= 5) {
+    	ciphertext_len = 32;
+    } else if (p <= 7) {
+    	ciphertext_len = 48;
+    } else {
+    	ciphertext_len = 64;
+    }
+    int user = 0;
+	while (fread((char*)ciphertext, 128, 1, enc_x)) {
+		unsigned char plaintext[128];
+		int plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
+		plaintext[plaintext_len] = '\0';
+		char *token = strtok((char*)plaintext, ",");
+		int val = 0;
+		while (token) {
+			X[user][val] = atof(token);
 			val++;
 			token = strtok(NULL, ",");
 		}
-		val = 0;
-		line++;
+		user++;
 	}
-	fclose(d_vars);
-	
-	/* Get input y (n x 1) vector */
-	vector<vector<double>> y(n, vector<double>(1));
-	FILE *i_vars = fopen("y.txt", "r");
-	if (!i_vars) {
-		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
-	}
-	line = 0;
-	while (fgets(buffer, BUFSIZ, i_vars)) {
-		y[line][0] = atof(buffer);
-		line++;
-	}
-	fclose(i_vars);
+	fclose(enc_x);
+	print(X);
+	printf("\n");
 
+	/* Read enc_y.txt into enclave, decrypt each line, and populate y vector */
+	vector<vector<double>> y(n, vector<double>(1));
+	FILE *enc_y = fopen("enc_y.txt", "r");
+	if (!enc_y) {
+		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
+		return 0;
+	}
+	user = 0;
+	while(fread((char*)ciphertext, 128, 1, enc_y)) {
+		unsigned char plaintext[128];
+		int plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
+		plaintext[plaintext_len] = '\0';
+		y[user][0] = atof((char*)plaintext);
+		user++;
+	}
+	fclose(enc_y);
+	print(y);
+
+	return 0;
+	
 	/* 1. Compute X' (Transpose of X) */
 	auto start = std::chrono::high_resolution_clock::now();
 	vector<vector<double>> X_trans = transpose(X);
@@ -223,6 +249,31 @@ void inverse(vector<vector<double>>& m, int p) {
 			m[i][j] = a[i][j]/det;	
 		}
 	}
+}
+
+int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
+            unsigned char *iv, unsigned char *plaintext)
+{
+    EVP_CIPHER_CTX *ctx;
+
+    int len;
+
+    int plaintext_len;
+
+    /* Create and initialise the context */
+    ctx = EVP_CIPHER_CTX_new();
+    EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv);
+
+    EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len);
+    plaintext_len = len;
+
+    EVP_DecryptFinal_ex(ctx, plaintext + len, &len);
+    plaintext_len += len;
+
+    /* Clean up */
+    EVP_CIPHER_CTX_free(ctx);
+
+    return plaintext_len;
 }
 
 void usage(int status) {
