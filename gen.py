@@ -5,7 +5,7 @@ import sys, random, os
 def main():
 
 	p = 10
-	n = 1000
+	n = 1000000
 	arguments = sys.argv[1:]
 	while arguments and arguments[0].startswith("-"):
 		arg = arguments.pop(0)
@@ -19,7 +19,7 @@ def main():
 	p_counter = 0
 	for _ in range(n):
 		for i in range(p):
-			x.write("{0:.3f}".format(random.uniform(0, 1)))
+			x.write("{0:.3f}".format(random.uniform(1, 10)))
 			if i != p - 1:
 				x.write(",")
 		x.write("\n");
@@ -28,7 +28,7 @@ def main():
 	# Write to y.txt -> file that contains value of y vector (n x 1)
 	y = open("y.txt", "w")
 	for i in range(n):
-		y.write("{0:.3f}\n".format(random.uniform(0, 1)))
+		y.write("{0:.3f}\n".format(random.uniform(1, 10)))
 	y.close()
 
 	# Call encryption program to encrypt x and y files

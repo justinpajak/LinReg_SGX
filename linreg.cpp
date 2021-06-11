@@ -7,21 +7,21 @@
 
 using std::vector;
 
-void print(vector<vector<float>> m);
+void print(vector<vector<double>> m);
 
 void usage(int status);
 
-vector<vector<float>> transpose(vector<vector<float>>& m);
+vector<vector<double>> transpose(vector<vector<double>>& m);
 
-vector<vector<float>> multiply(vector<vector<float>>& m1, vector<vector<float>>& m2);
+vector<vector<double>> multiply(vector<vector<double>>& m1, vector<vector<double>>& m2);
 
-void cofactors(vector<vector<float>>& m, vector<vector<float>>& cofs, int p, int q, int n);
+void cofactors(vector<vector<double>>& m, vector<vector<double>>& cofs, int p, int q, int n);
 
-float determinant(vector<vector<float>>& m, int n, int p);
+double determinant(vector<vector<double>>& m, int n, int p);
 
-vector<vector<float>> adjoint(vector<vector<float>>& m, int p);
+void adjoint(vector<vector<double>>& m, vector<vector<double>>& a, int p);
 
-vector<vector<float>> inverse(vector<vector<float>>& m, int p);
+void inverse(vector<vector<double>>& m, int p);
 
 int main(int argc, char *argv[]) {
 
@@ -45,9 +45,11 @@ int main(int argc, char *argv[]) {
 				break;
 		}
 	}
+	
+	/* Read enc_x.txt and enc_y.txt into enclave and populate X matrix and y vector */
+	vector<vector<double>> X(n, vector<double>(p));
 
-	/* Get input X (n x p) matrix */
-	vector<vector<float>> X(n, vector<float>(p));
+	/* Get input X (n x p) matrix */ 
 	FILE *d_vars = fopen("x.txt", "r");
 	if (!d_vars) {
 		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
@@ -70,7 +72,7 @@ int main(int argc, char *argv[]) {
 	fclose(d_vars);
 	
 	/* Get input y (n x 1) vector */
-	vector<vector<float>> y(n, vector<float>(1));
+	vector<vector<double>> y(n, vector<double>(1));
 	FILE *i_vars = fopen("y.txt", "r");
 	if (!i_vars) {
 		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
@@ -80,43 +82,43 @@ int main(int argc, char *argv[]) {
 		y[line][0] = atof(buffer);
 		line++;
 	}
-	fclose(i_vars);	
+	fclose(i_vars);
 
 	/* 1. Compute X' (Transpose of X) */
 	auto start = std::chrono::high_resolution_clock::now();
-	vector<vector<float>> X_trans = transpose(X);
+	vector<vector<double>> X_trans = transpose(X);
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "finished X'. 		Time taken: " << duration.count() / float(1000000) << " seconds." << std::endl;
+	std::cout << "finished X'. 		Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
 
 	/* 2. Compute X' * X --> result is p x p matrix */
 	start = std::chrono::high_resolution_clock::now();
-	vector<vector<float>> res = multiply(X_trans, X);
+	vector<vector<double>> res = multiply(X_trans, X);
 	stop = std::chrono::high_resolution_clock::now();
 	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "finished X' * X. 	Time taken: " << duration.count() / float(1000000) << " seconds." << std::endl;
+	std::cout << "finished X' * X. 	Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
 
 	/* 3. Compute inverse of X' * X */
 	start = std::chrono::high_resolution_clock::now();
-	res = inverse(res, p);
+	inverse(res, p);
 	stop = std::chrono::high_resolution_clock::now();
 	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "finished inverse. 	Time taken: " << duration.count() / float(1000000) << " seconds." << std::endl;
+	std::cout << "finished inverse. 	Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
+	print(res);
 
 	/* 4. Multiply inverse result by X' */
 	start = std::chrono::high_resolution_clock::now();
 	res = multiply(res, X_trans);
 	stop = std::chrono::high_resolution_clock::now();
 	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "finished * X'.		Time taken: " << duration.count() / float(1000000) << " seconds." << std::endl;
-	
+	std::cout << "finished * X'.		Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
+
 	/* 5. Multiply result by y (n x 1) matrix --> result is beta hat, (p x 1) matrix*/
 	start = std::chrono::high_resolution_clock::now();
-	vector<vector<float>> beta = multiply(res, y);
+	vector<vector<double>> beta = multiply(res, y);
 	stop = std::chrono::high_resolution_clock::now();
 	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "finished * y. 		Time taken: "<< duration.count() / float(1000000) << " seconds." << std::endl;
-
+	std::cout << "finished * y. 		Time taken: "<< duration.count() / double(1000000) << " seconds." << std::endl;
 
 	/* Write data back to beta.txt file */
 	FILE *b_data = fopen("beta.txt", "w");
@@ -131,9 +133,9 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-vector<vector<float>> transpose(vector<vector<float>>& m) {
+vector<vector<double>> transpose(vector<vector<double>>& m) {
 
-	vector<vector<float>> result(m[0].size(), vector<float>(m.size()));
+	vector<vector<double>> result(m[0].size(), vector<double>(m.size()));
 	for (int i = 0; i < m.size(); i++) {
 		for (int j = 0; j < m[i].size(); j++) {
 			result[j][i] = m[i][j];
@@ -142,10 +144,10 @@ vector<vector<float>> transpose(vector<vector<float>>& m) {
 	return result;
 }
 
-vector<vector<float>> multiply(vector<vector<float>>& m1, vector<vector<float>>& m2) {
+vector<vector<double>> multiply(vector<vector<double>>& m1, vector<vector<double>>& m2) {
 
 
-	vector<vector<float>> result(m1.size(), vector<float>(m2[0].size()));
+	vector<vector<double>> result(m1.size(), vector<double>(m2[0].size()));
 	for (int i = 0; i < m1.size(); i++) {
 		for (int j = 0; j < m2[0].size(); j++) {
 			for (int k = 0; k < m1[0].size(); k++) {
@@ -156,7 +158,7 @@ vector<vector<float>> multiply(vector<vector<float>>& m1, vector<vector<float>>&
 	return result;
 }
 
-void cofactors(vector<vector<float>>& m, vector<vector<float>>& cofs, int p, int q, int n) {
+void cofactors(vector<vector<double>>& m, vector<vector<double>>& cofs, int p, int q, int n) {
 	int i = 0;
 	int j = 0;
 	for (int r = 0; r < n; r++) {
@@ -172,58 +174,56 @@ void cofactors(vector<vector<float>>& m, vector<vector<float>>& cofs, int p, int
 
 		}
 	}
-}
+}	
 
-float determinant(vector<vector<float>>& m, int n, int p) {
-	float det = 0;
+double determinant(vector<vector<double>>& m, int n, int p) {
+	double det = 0;
 	if (n == 1) {
 		return m[0][0];
 	}
 
-	vector<vector<float>> cofs(p, vector<float>(p));
+	vector<vector<double>> cofs(p, vector<double>(p));
 	int sign = 1;
 	for (int i = 0; i < n; i++) {
 		cofactors(m, cofs, 0, i, n);
 		det += sign * m[0][i] * determinant(cofs, n - 1, p);
-		sign *= -1;
+		sign = -sign;
 	}
 
 	return det;
 }
 
-vector<vector<float>> adjoint(vector<vector<float>>& m, int p) {
+void adjoint(vector<vector<double>>& m, vector<vector<double>>& a, int p) {
+
+	if (p == 1) {
+		a[0][0] = 1;
+		return;
+	}
 	int sign = 1;
-	vector<vector<float>> cofs(p, vector<float>(p));
-	vector<vector<float>> adj(p, vector<float>(p));
+	vector<vector<double>> cofs(p, vector<double>(p));
 
 	for (int i = 0; i < p; i++) {
 		for (int j = 0; j < p; j++) {
 			cofactors(m, cofs, i, j, p);
 			sign = ((i + j) % 2 == 0) ? 1 : -1;
-			adj[j][i] = sign * determinant(cofs, p - 1, p - 1);
+			a[j][i] = sign * determinant(cofs, p - 1, p - 1);
 		}
 	}
-	return adj;
 }
 
-vector<vector<float>> inverse(vector<vector<float>>& m, int p) {
-	if (m.size() == 1 && m[0].size() == 1) {
-		m[0][0] = pow(m[0][0], -1);
-		return m;
-	}
-	float det = determinant(m, p, p);
+void inverse(vector<vector<double>>& m, int p) {
+	double det = determinant(m, p, p);
 	if (det == 0) {
-		return m;
+		return;
 	}
-	vector<vector<float>> a = adjoint(m, p);
-	vector<vector<float>> inv(p, vector<float>(p));
+	vector<vector<double>> a(p, vector<double>(p));
+	adjoint(m, a, p);
 
 	for (int i = 0; i < p; i++) {
 		for (int j = 0; j < p; j++) {
-			inv[i][j] = a[i][j]/det;	
+			m[i][j] = a[i][j]/det;	
 		}
 	}
-	return inv;
 }
 
 void usage(int status) {
@@ -234,7 +234,7 @@ void usage(int status) {
 	exit(status);
 }
 
-void print(vector<vector<float>> m) {
+void print(vector<vector<double>> m) {
 	for (int i = 0; i < m.size(); i++) {
 		for (int j = 0; j < m[i].size(); j++) {
 			std::cout << m[i][j] << " ";
