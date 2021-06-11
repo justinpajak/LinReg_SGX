@@ -104,7 +104,6 @@ int main(int argc, char *argv[]) {
 	stop = std::chrono::high_resolution_clock::now();
 	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 	std::cout << "finished inverse. 	Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
-	print(res);
 
 	/* 4. Multiply inverse result by X' */
 	start = std::chrono::high_resolution_clock::now();
