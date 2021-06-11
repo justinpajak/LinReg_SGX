@@ -5,7 +5,7 @@ import sys, random, os
 def main():
 
 	p = 10
-	n = 1000000
+	n = 1000
 	arguments = sys.argv[1:]
 	while arguments and arguments[0].startswith("-"):
 		arg = arguments.pop(0)
@@ -19,7 +19,7 @@ def main():
 	p_counter = 0
 	for _ in range(n):
 		for i in range(p):
-			x.write("{0:.6f}".format(random.uniform(0, 0.1)))
+			x.write("{0:.3f}".format(random.uniform(0, 1)))
 			if i != p - 1:
 				x.write(",")
 		x.write("\n");
@@ -32,7 +32,7 @@ def main():
 	y.close()
 
 	# Call encryption program to encrypt x and y files
-	os.popen("./aes")
+	#os.popen("./aes")
 
 if __name__ == '__main__':
 	main()
