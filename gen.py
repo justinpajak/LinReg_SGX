@@ -4,10 +4,17 @@ import sys, random
 
 def main():
 
-	# Write to x.txt -> file that contains contains of X matrix (n x p)
 	p = 10
 	n = 1000000
+	arguments = sys.argv[1:]
+	while arguments and arguments[0].startswith("-"):
+		arg = arguments.pop(0)
+		if arg == '-n':
+			n = int(arguments.pop(0))
+		if arg == '-p':
+			p = int(arguments.pop(0))
 	
+	# Write to x.txt -> file that contians contents of X matrix (n x p)
 	x = open("x.txt", "w")
 	p_counter = 0
 	for _ in range(n):
