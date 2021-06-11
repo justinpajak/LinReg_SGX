@@ -29,6 +29,8 @@ void inverse(vector<vector<double>>& m, int p);
 int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
             unsigned char *iv, unsigned char *plaintext);
 
+void readAndDecrypt(vector<vector<double>>& X, vector<vector<double>>& y, int p);
+
 int main(int argc, char *argv[]) {
 
 	int p = 10; // number of independent variables
@@ -52,12 +54,94 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	
-	/* Read enc_x.txt into enclave, decrypt each line, and populate X matrix */
+	/* Read enc_x.txt and enc_y.txt into enclave. Decrypt and store in data structures */
 	vector<vector<double>> X(n, vector<double>(p));
+	vector<vector<double>> y(n, vector<double>(1));
+
+	auto start = std::chrono::high_resolution_clock::now();
+	readAndDecrypt(X, y, p);
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "Read in data and decrypted.	Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
+
+	/* 1. Compute X' (Transpose of X) */
+	start = std::chrono::high_resolution_clock::now();
+	vector<vector<double>> X_trans = transpose(X);
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "finished X'. 			Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
+
+	/* 2. Compute X' * X --> result is p x p matrix */
+	start = std::chrono::high_resolution_clock::now();
+	vector<vector<double>> res = multiply(X_trans, X);
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "finished X' * X. 		Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
+
+	/* 3. Compute inverse of X' * X */
+	start = std::chrono::high_resolution_clock::now();
+	inverse(res, p);
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "finished inverse. 		Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
+
+	/* 4. Multiply inverse result by X' */
+	start = std::chrono::high_resolution_clock::now();
+	res = multiply(res, X_trans);
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "finished * X'.			Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
+
+	/* 5. Multiply result by y (n x 1) matrix --> result is beta hat, (p x 1) matrix*/
+	start = std::chrono::high_resolution_clock::now();
+	vector<vector<double>> beta = multiply(res, y);
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "finished * y. 			Time taken: "<< duration.count() / double(1000000) << " seconds." << std::endl;
+
+	/* Write data back to beta.txt file */
+	FILE *b_data = fopen("beta.txt", "w");
+	if (!b_data) {
+		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
+	}
+	for (int i = 0; i < beta.size(); i++) {
+		fprintf(b_data, "%f\n", beta[i][0]);
+	}
+	fclose(b_data);
+
+	return 0;
+}
+
+int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
+            unsigned char *iv, unsigned char *plaintext)
+{
+    EVP_CIPHER_CTX *ctx;
+
+    int len;
+
+    int plaintext_len;
+
+    /* Create and initialise the context */
+    ctx = EVP_CIPHER_CTX_new();
+    EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv);
+
+    EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len);
+    plaintext_len = len;
+
+    EVP_DecryptFinal_ex(ctx, plaintext + len, &len);
+    plaintext_len += len;
+
+    /* Clean up */
+    EVP_CIPHER_CTX_free(ctx);
+
+    return plaintext_len;
+}
+
+void readAndDecrypt(vector<vector<double>>& X, vector<vector<double>>& y, int p) {
 	FILE *enc_x = fopen("enc_x.txt", "r");
 	if (!enc_x) {
 		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
-		return 0;
+		return;
 	}
 	unsigned char ciphertext[128];
 	unsigned char *key = (unsigned char *)"01234567890123456789012345678901";
@@ -87,15 +171,11 @@ int main(int argc, char *argv[]) {
 		user++;
 	}
 	fclose(enc_x);
-	print(X);
-	printf("\n");
-
-	/* Read enc_y.txt into enclave, decrypt each line, and populate y vector */
-	vector<vector<double>> y(n, vector<double>(1));
+	
 	FILE *enc_y = fopen("enc_y.txt", "r");
 	if (!enc_y) {
 		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
-		return 0;
+		return;
 	}
 	user = 0;
 	while(fread((char*)ciphertext, 128, 1, enc_y)) {
@@ -106,56 +186,6 @@ int main(int argc, char *argv[]) {
 		user++;
 	}
 	fclose(enc_y);
-	print(y);
-
-	return 0;
-	
-	/* 1. Compute X' (Transpose of X) */
-	auto start = std::chrono::high_resolution_clock::now();
-	vector<vector<double>> X_trans = transpose(X);
-	auto stop = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "finished X'. 		Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
-
-	/* 2. Compute X' * X --> result is p x p matrix */
-	start = std::chrono::high_resolution_clock::now();
-	vector<vector<double>> res = multiply(X_trans, X);
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "finished X' * X. 	Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
-
-	/* 3. Compute inverse of X' * X */
-	start = std::chrono::high_resolution_clock::now();
-	inverse(res, p);
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "finished inverse. 	Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
-
-	/* 4. Multiply inverse result by X' */
-	start = std::chrono::high_resolution_clock::now();
-	res = multiply(res, X_trans);
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "finished * X'.		Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
-
-	/* 5. Multiply result by y (n x 1) matrix --> result is beta hat, (p x 1) matrix*/
-	start = std::chrono::high_resolution_clock::now();
-	vector<vector<double>> beta = multiply(res, y);
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "finished * y. 		Time taken: "<< duration.count() / double(1000000) << " seconds." << std::endl;
-
-	/* Write data back to beta.txt file */
-	FILE *b_data = fopen("beta.txt", "w");
-	if (!b_data) {
-		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
-	}
-	for (int i = 0; i < beta.size(); i++) {
-		fprintf(b_data, "%f\n", beta[i][0]);
-	}
-	fclose(b_data);
-
-	return 0;
 }
 
 vector<vector<double>> transpose(vector<vector<double>>& m) {
@@ -249,31 +279,6 @@ void inverse(vector<vector<double>>& m, int p) {
 			m[i][j] = a[i][j]/det;	
 		}
 	}
-}
-
-int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
-            unsigned char *iv, unsigned char *plaintext)
-{
-    EVP_CIPHER_CTX *ctx;
-
-    int len;
-
-    int plaintext_len;
-
-    /* Create and initialise the context */
-    ctx = EVP_CIPHER_CTX_new();
-    EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv);
-
-    EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len);
-    plaintext_len = len;
-
-    EVP_DecryptFinal_ex(ctx, plaintext + len, &len);
-    plaintext_len += len;
-
-    /* Clean up */
-    EVP_CIPHER_CTX_free(ctx);
-
-    return plaintext_len;
 }
 
 void usage(int status) {
