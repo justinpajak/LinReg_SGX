@@ -32,7 +32,7 @@ def main():
 	y.close()
 
 	# Call encryption program to encrypt x and y files
-	#os.popen("./aes")
+	os.popen("./aes")
 
 if __name__ == '__main__':
 	main()
