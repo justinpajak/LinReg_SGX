@@ -5,11 +5,11 @@ Implementation of Linear Regression Algorithm in SGX using Graphene
 
 - p and n variables must be the same in rand_gen.py and linreg.cpp. Then rand_gen.py must be ran before executing linreg.
 
-1. g++ linreg.cpp -o linreg
+1. g++ linreg.cpp -o linreg -lcrypto
 
 2. make SGX=1 -f mk_graphene linreg.manifest.sgx linreg.token pal_loader
 
-3. SGX=1 ./pal_loader ./linreg
+3. SGX=1 OMP_NUM_THREADS=1 ./pal_loader ./linreg
 
 To clean:
 make -f mk_graphene clean
