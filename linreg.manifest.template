@@ -28,7 +28,7 @@ sgx.allowed_files.xdata = "file:./enc_x.txt"
 sgx.allowed_files.ydata = "file:./enc_y.txt"
 sgx.allowed_files.beta = "file:./beta.txt"
 
-sgx.enclave_size = "1G"
+sgx.enclave_size = "4G"
 sgx.nonpie_binary = 1
 
 sgx.trusted_files.runtime = "file:{{ graphene.runtimedir() }}"

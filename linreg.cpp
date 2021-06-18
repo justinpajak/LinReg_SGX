@@ -57,6 +57,7 @@ int main(int argc, char *argv[]) {
 	}
 	
 	/* Read enc_x.txt and enc_y.txt into enclave. Decrypt and store in data structures */
+	auto start = std::chrono::high_resolution_clock::now();
 	vector<vector<double>> X(n, vector<double>(p));
 	vector<vector<double>> y(n, vector<double>(1));
 	readAndDecrypt(X, y, p);
@@ -85,6 +86,9 @@ int main(int argc, char *argv[]) {
 		fprintf(b_data, "%f\n", beta[i][0]);
 	}
 	fclose(b_data);
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << duration.count() / float(1000000) << std::endl;
 
 	return 0;
 }
@@ -130,9 +134,15 @@ void readAndDecrypt(vector<vector<double>>& X, vector<vector<double>>& y, int p)
     	ciphertext_len = 32;
     } else if (p <= 7) {
     	ciphertext_len = 48;
-    } else {
+    } else if (p <= 10) {
     	ciphertext_len = 64;
-    }
+    } else if (p <= 13) {
+		ciphertext_len = 80;
+	} else if (p <= 15) {
+		ciphertext_len = 96;
+	} else {
+		ciphertext_len = 112;
+	}
     int user = 0;
 	while (read(enc_x, (char*)ciphertext, 128)) {
 		unsigned char plaintext[128];
