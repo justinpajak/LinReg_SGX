@@ -153,9 +153,15 @@ void readAndDecrypt(vector<vector<double>>& X, vector<vector<double>>& y, int p)
     	ciphertext_len = 32;
     } else if (p <= 7) {
     	ciphertext_len = 48;
-    } else {
+    } else if (p <= 10) {
     	ciphertext_len = 64;
-    }
+    } else if (p <= 13) {
+		ciphertext_len = 80;
+	} else if (p <= 15) {
+		ciphertext_len = 96;
+	} else {
+		ciphertext_len = 112;
+	}
     int user = 0;
 	while (fread((char*)ciphertext, 128, 1, enc_x)) {
 		unsigned char plaintext[128];
