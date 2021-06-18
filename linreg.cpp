@@ -7,6 +7,8 @@
 #include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 using std::vector;
 
@@ -142,7 +144,7 @@ int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
 }
 
 void readAndDecrypt(vector<vector<double>>& X, vector<vector<double>>& y, int p) {
-	FILE *enc_x = fopen("enc_x.txt", "r");
+	int enc_x = open("enc_x.txt", O_RDONLY);
 	if (!enc_x) {
 		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
 		return;
@@ -167,7 +169,7 @@ void readAndDecrypt(vector<vector<double>>& X, vector<vector<double>>& y, int p)
 		ciphertext_len = 112;
 	}
     int user = 0;
-	while (fread((char*)ciphertext, 128, 1, enc_x)) {
+	while (read(enc_x, (char*)ciphertext, 128)) {
 		unsigned char plaintext[128];
 		int plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
 		plaintext[plaintext_len] = '\0';
@@ -180,22 +182,22 @@ void readAndDecrypt(vector<vector<double>>& X, vector<vector<double>>& y, int p)
 		}
 		user++;
 	}
-	fclose(enc_x);
+	close(enc_x);
 	
-	FILE *enc_y = fopen("enc_y.txt", "r");
+	int enc_y = open("enc_y.txt", O_RDONLY);
 	if (!enc_y) {
 		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
 		return;
 	}
 	user = 0;
-	while(fread((char*)ciphertext, 128, 1, enc_y)) {
+	while(read(enc_y, (char*)ciphertext, 128)) {
 		unsigned char plaintext[128];
 		int plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
 		plaintext[plaintext_len] = '\0';
 		y[user][0] = atof((char*)plaintext);
 		user++;
 	}
-	fclose(enc_y);
+	close(enc_y);
 }
 
 vector<vector<double>> transpose(vector<vector<double>>& m) {
