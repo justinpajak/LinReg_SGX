@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 	readAndDecrypt(X, y, p);
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "Read in data and decrypted.	Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
+	std::cout << "Read in data and decrypt.	Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
 
 	/* 1. Compute X' (Transpose of X) */
 	start = std::chrono::high_resolution_clock::now();
@@ -100,6 +100,7 @@ int main(int argc, char *argv[]) {
 	std::cout << "finished * y. 			Time taken: "<< duration.count() / double(1000000) << " seconds." << std::endl;
 
 	/* Write data back to beta.txt file */
+	start = std::chrono::high_resolution_clock::now();
 	FILE *b_data = fopen("beta.txt", "w");
 	if (!b_data) {
 		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
@@ -108,6 +109,9 @@ int main(int argc, char *argv[]) {
 		fprintf(b_data, "%f\n", beta[i][0]);
 	}
 	fclose(b_data);
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "Wrote beta vector to file.	Time taken: " << duration.count() / double(1000000) << " seconds." << std::endl;
 
 	return 0;
 }
