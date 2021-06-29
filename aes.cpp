@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     int ciphertext_len, decryptedtext_len;
 
     /* Loop through x.txt file and encrypt each line */
-    FILE* x_data = fopen("./data/x.txt", "r+");
+    FILE* x_data = fopen("x.txt", "r+");
     if (!x_data) {
         fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
         return 1;
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     };
 
     /* Loop through y.txt file and encrypt each float */
-    FILE* y_data = fopen("./data/y.txt", "r+");
+    FILE* y_data = fopen("y.txt", "r+");
     if (!y_data) {
         fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
         return 1;
