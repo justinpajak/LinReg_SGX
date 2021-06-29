@@ -1,15 +1,38 @@
 # LinReg_SGX
 Implementation of Linear Regression Algorithm in SGX using Graphene
 
-- change p and n variables in rand_gen.py and run script to generate x.txt and y.txt (files with random floats)
+Dependencies:
+- Intel SGX: https://github.com/intel/linux-sgx
+- Graphene: https://graphene.readthedocs.io/en/latest/quickstart.html#quick-start-with-sgx-support
+- OpenSSL: https://www.openssl.org/
 
-- p and n variables must be the same in rand_gen.py and linreg.cpp. Then rand_gen.py must be ran before executing linreg.
+<hr/>
+1. Compile program to encrypt data using AES-CBC with NI
 
-1. g++ linreg.cpp -o linreg -lcrypto
+	1. ~/LinReg_SGX$ make aes
 
-2. make SGX=1 -f mk_graphene linreg.manifest.sgx linreg.token pal_loader
+<hr/>
+2. Generate X matrix and y vetor data in x.txt and y.txt, encrypt, and store ciphertexts in enc_x.txt and enc_y.txt
 
-3. SGX=1 OMP_NUM_THREADS=1 ./pal_loader ./linreg
+	1. ~/LinReg_SGX$ ./scripts/gen.py -n 1000000 -p 10
+    -  Generate p = 10 floats for n = 1000000 users
 
-To clean:
-make -f mk_graphene clean
+<hr/>
+3. Run SGX Linear Regression Program
+
+	1. make linreg
+
+	2. make SGX=1 -f mk_graphene linreg.manifest.sgx linreg.token pal_loader
+
+	3. SGX=1 ./pal_loader ./linreg -n 1000000 -p 10
+	
+	- This program reads in encrypted data from enc_x.txt and enc_y.txt, decrypts it,
+	  runs the linear regression on the data, and outputs the beta vector to beta.txt.
+
+	- The total time taken to read in data, decrypt, and peform the linear regression algorithm is outputted.
+
+<hr/>
+4. Clean
+
+	1. make clean
+	2. make -f mk_graphene clean
