@@ -36,3 +36,4 @@ Dependencies:
 
 	1. make clean
 	2. make -f mk_graphene clean
+	3. ./scripts/cleaner.sh
