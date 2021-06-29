@@ -20,11 +20,11 @@ Dependencies:
 <hr/>
 3. Run SGX Linear Regression Program
 
-	1. make linreg
+	1. ~/LinReg_SGX$ make linreg
 
-	2. make SGX=1 -f mk_graphene linreg.manifest.sgx linreg.token pal_loader
+	2. ~/LinReg_SGX$ make SGX=1 -f mk_graphene linreg.manifest.sgx linreg.token pal_loader
 
-	3. SGX=1 ./pal_loader ./linreg -n 1000000 -p 10
+	3. ~/LinReg_SGX$ SGX=1 ./pal_loader ./linreg -n 1000000 -p 10
 	
 	- This program reads in encrypted data from enc_x.txt and enc_y.txt, decrypts it,
 	  runs the linear regression on the data, and outputs the beta vector to beta.txt.
@@ -34,6 +34,6 @@ Dependencies:
 <hr/>
 4. Clean
 
-	1. make clean
-	2. make -f mk_graphene clean
-	3. ./scripts/cleaner.sh
+	1. ~/LinReg$ make clean
+	2. ~/LinReg$ make -f mk_graphene clean
+	3. ~/LinReg$ ./scripts/cleaner.sh
