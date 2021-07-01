@@ -55,29 +55,63 @@ int main(int argc, char *argv[]) {
 				break;
 		}
 	}
+
+	/* Open timing data file*/
+	FILE* timing = fopen("timing.csv", "a");
 	
 	/* Read enc_x.txt and enc_y.txt into enclave. Decrypt and store in data structures */
+
 	auto start = std::chrono::high_resolution_clock::now();
 	vector<vector<double>> X(n, vector<double>(p));
 	vector<vector<double>> y(n, vector<double>(1));
 	readAndDecrypt(X, y, p);
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "Read and decrypt X and y: " << duration.count() << std::endl;
+	fprintf(timing, "%ld,", duration.count());
 
 	/* 1. Compute X' (Transpose of X) */
+	start = std::chrono::high_resolution_clock::now();
 	vector<vector<double>> X_trans = transpose(X);
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "Compute X': " << duration.count() << std::endl;
+	fprintf(timing, "%ld,", duration.count());
 
 	/* 2. Compute X' * X --> result is p x p matrix */
+	start = std::chrono::high_resolution_clock::now();
 	vector<vector<double>> left = multiply(X_trans, X);
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "Multiply X' * X: " << duration.count() << std::endl;
+	fprintf(timing, "%ld,", duration.count());
 
 	/* 3. Compute inverse of X' * X */
+	start = std::chrono::high_resolution_clock::now();
 	inverse(left, p);
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "Compute Inverse: " << duration.count() << std::endl;
+	fprintf(timing, "%ld,", duration.count());
 	
 	/* 4. Compute X'y  */
+	start = std::chrono::high_resolution_clock::now();
 	vector<vector<double>> right = multiply(X_trans, y);
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "Multiply X' * y: " << duration.count() << std::endl;
+	fprintf(timing, "%ld,", duration.count());
 
 	/* 5. Multiply (X'X)^-1 times (X'y) --> result is beta hat, (p x 1) matrix*/
+	start = std::chrono::high_resolution_clock::now();
 	vector<vector<double>> beta = multiply(left, right);
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "Multiply (X'X)^-1 * (X'y): " << duration.count() << std::endl;
+	fprintf(timing, "%ld,", duration.count());
 	
 	/* Write data back to beta.txt file */
+	start = std::chrono::high_resolution_clock::now();
 	FILE *b_data = fopen("beta.txt", "w");
 	if (!b_data) {
 		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
@@ -86,10 +120,11 @@ int main(int argc, char *argv[]) {
 		fprintf(b_data, "%f\n", beta[i][0]);
 	}
 	fclose(b_data);
-	auto stop = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << duration.count() / float(1000000) << std::endl;
-	
+	stop = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "Write back beta: " << duration.count() << std::endl;
+	fprintf(timing, "%ld\n", duration.count());
+
 	return 0;
 }
 
