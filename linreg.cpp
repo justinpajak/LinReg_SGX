@@ -66,16 +66,16 @@ int main(int argc, char *argv[]) {
 	vector<vector<double>> X_trans = transpose(X);
 
 	/* 2. Compute X' * X --> result is p x p matrix */
-	vector<vector<double>> res = multiply(X_trans, X);
+	vector<vector<double>> left = multiply(X_trans, X);
 
 	/* 3. Compute inverse of X' * X */
-	inverse(res, p);
+	inverse(left, p);
 	
-	/* 4. Multiply inverse result by X' */
-	res = multiply(res, X_trans);
+	/* 4. Compute X'y  */
+	vector<vector<double>> right = multiply(X_trans, y);
 
-	/* 5. Multiply result by y (n x 1) matrix --> result is beta hat, (p x 1) matrix*/
-	vector<vector<double>> beta = multiply(res, y);
+	/* 5. Multiply (X'X)^-1 times (X'y) --> result is beta hat, (p x 1 matrix)  */
+	vector<vector<double>> beta = multiply(left, right);
 	
 	/* Write data back to beta.txt file */
 	FILE *b_data = fopen("beta.txt", "w");
