@@ -20,6 +20,8 @@ vector<vector<double>> transpose(vector<vector<double>>& m);
 
 vector<vector<double>> multiply(vector<vector<double>>& m1, vector<vector<double>>& m2);
 
+vector<vector<double>> matrix_mult_from_transpose(const vector<vector<double>> & xT);
+
 void cofactors(vector<vector<double>>& m, vector<vector<double>>& cofs, int p, int q, int n);
 
 double determinant(vector<vector<double>>& m, int n, int p);
@@ -58,23 +60,20 @@ int main(int argc, char *argv[]) {
 	
 	/* Read enc_x.txt and enc_y.txt into enclave. Decrypt and store in data structures */
 	auto start = std::chrono::high_resolution_clock::now();
-	vector<vector<double>> X(n, vector<double>(p));
+	vector<vector<double>> X_trans(p, vector<double>(n));
 	vector<vector<double>> y(n, vector<double>(1));
-	readAndDecrypt(X, y, p);
+	readAndDecrypt(X_trans, y, p);
 
-	/* 1. Compute X' (Transpose of X) */
-	vector<vector<double>> X_trans = transpose(X);
+	/* 1. Compute X' * X --> result is p x p matrix */
+	vector<vector<double>> left = matrix_mult_from_transpose(X_trans);
 
-	/* 2. Compute X' * X --> result is p x p matrix */
-	vector<vector<double>> left = multiply(X_trans, X);
-
-	/* 3. Compute inverse of X' * X */
+	/* 2. Compute inverse of X' * X */
 	inverse(left, p);
 	
-	/* 4. Compute X'y  */
+	/* 3. Compute X'y  */
 	vector<vector<double>> right = multiply(X_trans, y);
 
-	/* 5. Multiply (X'X)^-1 times (X'y) --> result is beta hat, (p x 1 matrix)  */
+	/* 4. Multiply (X'X)^-1 times (X'y) --> result is beta hat, (p x 1 matrix)  */
 	vector<vector<double>> beta = multiply(left, right);
 	
 	/* Write data back to beta.txt file */
@@ -151,7 +150,7 @@ void readAndDecrypt(vector<vector<double>>& X, vector<vector<double>>& y, int p)
 		char *token = strtok((char*)plaintext, ",");
 		int val = 0;
 		while (token) {
-			X[user][val] = atof(token);
+			X[val][user] = atof(token);
 			val++;
 			token = strtok(NULL, ",");
 		}
@@ -198,6 +197,24 @@ vector<vector<double>> multiply(vector<vector<double>>& m1, vector<vector<double
 		}
 	}
 	return result;
+}
+
+vector<vector<double>> matrix_mult_from_transpose(const vector<vector<double>> & xT) {
+	vector<vector<double>> product(xT.size(), vector<double>(xT.size()));
+	size_t n = xT[0].size();
+	size_t p = xT.size();
+	// Go into 2 loops
+#pragma omp parallel for collapse(2)
+	for (size_t i = 0; i < p; i++) {
+		for (size_t j = 0; j < p; j++) {
+			product[i][j] = 0.0f;
+			for (size_t k = 0; k < n; k++) {
+				// Using a tmp var here avoids reallocation
+				product[i][j] += xT[i][k] * xT[j][k];
+			}
+		}
+	}
+	return product;
 }
 
 void cofactors(vector<vector<double>>& m, vector<vector<double>>& cofs, int p, int q, int n) {
