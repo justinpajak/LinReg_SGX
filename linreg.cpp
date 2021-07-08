@@ -4,9 +4,6 @@
 #include <vector>
 #include <math.h>
 #include <chrono>
-#include <openssl/conf.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -28,10 +25,7 @@ void adjoint(vector<vector<double>>& m, vector<vector<double>>& a, int p);
 
 void inverse(vector<vector<double>>& m, int p);
 
-int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
-            unsigned char *iv, unsigned char *plaintext);
-
-void readAndDecrypt(vector<vector<double>>& X, vector<vector<double>>& y, int p);
+void readData(vector<vector<double>>& X, vector<vector<double>>& y, int p);
 
 int main(int argc, char *argv[]) {
 
@@ -60,7 +54,7 @@ int main(int argc, char *argv[]) {
 	auto start = std::chrono::high_resolution_clock::now();
 	vector<vector<double>> X(n, vector<double>(p));
 	vector<vector<double>> y(n, vector<double>(1));
-	readAndDecrypt(X, y, p);
+	readData(X, y, p);
 
 	/* 1. Compute X' (Transpose of X) */
 	vector<vector<double>> X_trans = transpose(X);
@@ -70,7 +64,7 @@ int main(int argc, char *argv[]) {
 
 	/* 3. Compute inverse of X' * X */
 	inverse(left, p);
-	
+
 	/* 4. Compute X'y  */
 	vector<vector<double>> right = multiply(X_trans, y);
 
@@ -93,62 +87,17 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
-            unsigned char *iv, unsigned char *plaintext)
-{
-    EVP_CIPHER_CTX *ctx;
-
-    int len;
-
-    int plaintext_len;
-
-    /* Create and initialise the context */
-    ctx = EVP_CIPHER_CTX_new();
-    EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv);
-
-    EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len);
-    plaintext_len = len;
-
-    EVP_DecryptFinal_ex(ctx, plaintext + len, &len);
-    plaintext_len += len;
-
-    /* Clean up */
-    EVP_CIPHER_CTX_free(ctx);
-
-    return plaintext_len;
-}
-
-void readAndDecrypt(vector<vector<double>>& X, vector<vector<double>>& y, int p) {
-	int enc_x = open("enc_x.txt", O_RDONLY);
-	if (!enc_x) {
+void readData(vector<vector<double>>& X, vector<vector<double>>& y, int p) {
+	int data_x = open("x.txt", O_RDONLY);
+	if (!data_x) {
 		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
 		return;
 	}
-	unsigned char ciphertext[128];
-	unsigned char *key = (unsigned char *)"01234567890123456789012345678901";
-    unsigned char *iv = (unsigned char *)"0123456789012345";
-    int ciphertext_len;
-    if (p <= 2) {
-    	ciphertext_len = 16;
-    } else if (p <= 5) {
-    	ciphertext_len = 32;
-    } else if (p <= 7) {
-    	ciphertext_len = 48;
-    } else if (p <= 10) {
-    	ciphertext_len = 64;
-    } else if (p <= 13) {
-		ciphertext_len = 80;
-	} else if (p <= 15) {
-		ciphertext_len = 96;
-	} else {
-		ciphertext_len = 112;
-	}
     int user = 0;
-	while (read(enc_x, (char*)ciphertext, 128)) {
-		unsigned char plaintext[128];
-		int plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
-		plaintext[plaintext_len] = '\0';
-		char *token = strtok((char*)plaintext, ",");
+	char buffer[BUFSIZ];
+	while (read(data_x, (char*)buffer, 6 * p) > 0) {
+		buffer[6 * p] = '\0';
+		char *token = strtok((char*)buffer, ",");
 		int val = 0;
 		while (token) {
 			X[user][val] = atof(token);
@@ -157,22 +106,19 @@ void readAndDecrypt(vector<vector<double>>& X, vector<vector<double>>& y, int p)
 		}
 		user++;
 	}
-	close(enc_x);
-	
-	int enc_y = open("enc_y.txt", O_RDONLY);
-	if (!enc_y) {
+	close(data_x);
+
+	int data_y = open("y.txt", O_RDONLY);
+	if (!data_y) {
 		fprintf(stderr, "Unable to open file: %s\n", strerror(errno));
 		return;
 	}
 	user = 0;
-	while(read(enc_y, (char*)ciphertext, 128)) {
-		unsigned char plaintext[128];
-		int plaintext_len = decrypt(ciphertext, ciphertext_len, key, iv, plaintext);
-		plaintext[plaintext_len] = '\0';
-		y[user][0] = atof((char*)plaintext);
+	while(read(data_y, (char*)buffer, 6)) {
+		y[user][0] = atof((char*)buffer);
 		user++;
 	}
-	close(enc_y);
+	close(data_y);
 }
 
 vector<vector<double>> transpose(vector<vector<double>>& m) {

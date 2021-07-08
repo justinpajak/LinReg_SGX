@@ -19,7 +19,7 @@ def main():
 	p_counter = 0
 	for _ in range(n):
 		for i in range(p):
-			x.write("{0:.3f}".format(random.uniform(1, 10)))
+			x.write("{0:.3f}".format(random.uniform(1, 9)))
 			if i != p - 1:
 				x.write(",")
 		x.write("\n");
@@ -28,7 +28,7 @@ def main():
 	# Write to y.txt -> file that contains value of y vector (n x 1)
 	y = open("y.txt", "w")
 	for i in range(n):
-		y.write("{0:.3f}\n".format(random.uniform(1, 10)))
+		y.write("{0:.3f}\n".format(random.uniform(1, 9)))
 	y.close()
 
 	# Call encryption program to encrypt x and y files
